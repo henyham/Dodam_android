@@ -19,6 +19,8 @@ import com.google.zxing.integration.android.IntentResult;
 
 public class MainActivity extends AppCompatActivity {
 
+    private String tmp_isbn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,8 +50,15 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("MainActivity", "Cancelled scan");
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
             } else {
-                Log.d("MainActivity", "Scanned");
-                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+                tmp_isbn = result.getContents();
+                if(tmp_isbn.length() == 13){
+                    Log.d("Scannded isbn13 : " , tmp_isbn);
+                }
+                else{
+                    Log.d("Scannded isbn : " , tmp_isbn);
+                }
+                //Log.d("MainActivity", "Scanned");
+                //Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
             }
         } else {
             // This is important, otherwise the result will not be passed to the fragment
