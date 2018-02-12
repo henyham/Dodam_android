@@ -29,4 +29,9 @@
 
 <string name="tabs">Tabs</string>
 
+    <string name = "facebook_app_id"></string>
+
+    <string name = "fb_login_protocol_scheme">fb_login_protocol_scheme</string>
+
+
 </resources>
