@@ -26,6 +26,7 @@
             android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
+        <activity android:name=".BacordResultActivity"/>
     </application>
 
 </manifest>

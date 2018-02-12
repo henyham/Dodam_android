@@ -1,22 +1,17 @@
 package doseo.dodam.com.dodam;
 
 import android.content.Intent;
-import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.zxing.client.android.Intents;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -54,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //서버 연결 코드
     private final MyHandler mHandler = new MyHandler(this);
 
     private static class MyHandler extends Handler {
@@ -168,21 +164,24 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //data = new Intent(MainActivity.this, BacordResultActivity.class);
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if(result != null) {
             if(result.getContents() == null) {
                 Log.d("MainActivity", "Cancelled scan");
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
             } else {
+                Intent intent = new Intent(getApplicationContext(), BacordResultActivity.class);
                 tmp_isbn = result.getContents();
                 if(tmp_isbn.length() == 13){
+                    intent.putExtra("isbn_type",13);
                     Log.d("Scannded isbn13 : " , tmp_isbn);
                 }
-                else{
-                    Log.d("Scannded isbn : " , tmp_isbn);
+                else {
+                    intent.putExtra("isbn_type",10);
                 }
-                //Log.d("MainActivity", "Scanned");
-                //Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+                intent.putExtra("isbn_str", tmp_isbn);
+                startActivity(intent);
             }
         } else {
             // This is important, otherwise the result will not be passed to the fragment
