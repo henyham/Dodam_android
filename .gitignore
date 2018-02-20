@@ -51,4 +51,4 @@ freeline/
 freeline_project_description.json
 
 # properties file
-values/strings.xml
+strings.xml
