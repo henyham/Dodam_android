@@ -1,4 +1,4 @@
-package doseo.dodam.com.dodam;
+package doseo.dodam.com.dodam.Object;
 
 /**
  * Created by 조현정 on 2018-02-05.

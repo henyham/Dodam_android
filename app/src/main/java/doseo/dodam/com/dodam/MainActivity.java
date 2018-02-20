@@ -1,18 +1,18 @@
 package doseo.dodam.com.dodam;
 
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Base64;
+
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,44 +25,64 @@ import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import doseo.dodam.com.dodam.Object.User;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private String tmp_isbn;
     private TextView textviewJSONText;
+    private ImageView imgView;
     private String SEARCH_URL = "http://13.125.145.191:8000/test";
     private String REQUEST_URL = SEARCH_URL;
-
-    private void getHashKey() {
-        try {
-            PackageInfo info = getPackageManager().getPackageInfo(this.getPackageName(), PackageManager.GET_SIGNATURES);
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                Log.d("Hash log", "key_hash=" + Base64.encodeToString(md.digest(), Base64.DEFAULT));
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-    }
+    private Bitmap bitmap;
+    final static User currentUser = new User();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getHashKey();
-
         Button buttonRequestJSON = (Button)findViewById(R.id.button_main_requestjson);
+        //Button button = (Button)findViewById(R.id.button_go_login);
+        imgView = (ImageView)findViewById(R.id.user_profile_pic);
         textviewJSONText = (TextView)findViewById(R.id.textview_main_jsontext);
+
         textviewJSONText.setMovementMethod(new ScrollingMovementMethod());
 
+        //프로필 사진
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    URL url = new URL(currentUser.getUserProfile());
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+
+                    InputStream is =conn.getInputStream();
+                    bitmap = BitmapFactory.decodeStream(is);
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+        try{
+            thread.join();
+            imgView.setImageBitmap(bitmap);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        /*button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+                startActivity(intent);
+            }
+        });*/
         buttonRequestJSON.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
                 getJSON();
             }
         });
+
     }
 
     //서버 연결 코드
