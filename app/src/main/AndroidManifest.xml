@@ -34,7 +34,7 @@
             android:windowSoftInputMode="stateAlwaysHidden">
         </activity>
 
-        <activity android:name=".BacordResultActivity"/>
+        <activity android:name=".BarcodeResultActivity"/>
         <activity android:name=".SignInActivity"/>
 
         <activity

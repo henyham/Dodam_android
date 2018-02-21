@@ -2,7 +2,6 @@ package doseo.dodam.com.dodam;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -183,14 +182,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //data = new Intent(MainActivity.this, BacordResultActivity.class);
+        //data = new Intent(MainActivity.this, BarcodeResultActivity.class);
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if(result != null) {
             if(result.getContents() == null) {
                 Log.d("MainActivity", "Cancelled scan");
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
             } else {
-                Intent intent = new Intent(getApplicationContext(), BacordResultActivity.class);
+                Intent intent = new Intent(getApplicationContext(), BarcodeResultActivity.class);
                 tmp_isbn = result.getContents();
                 if(tmp_isbn.length() == 13){
                     intent.putExtra("isbn_type",13);
