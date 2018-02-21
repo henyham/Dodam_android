@@ -57,39 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
         textviewJSONText.setMovementMethod(new ScrollingMovementMethod());
 
-        //프로필 사진
-        /*Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setDoInput(true);
-                    conn.connect();
-
-                    InputStream is =conn.getInputStream();
-                    bitmap = BitmapFactory.decodeStream(is);
-
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-        try{
-            thread.join();
-            imgView.setImageBitmap(bitmap);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-*/
-        /*button.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(MainActivity.this, SignInActivity.class);
-                startActivity(intent);
-            }
-        });*/
         buttonRequestJSON.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,9 +68,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    //서버 연결 코드
+    //서버 연결시 필요한 핸들러 선언
     private final MyHandler mHandler = new MyHandler(this);
 
+    //서버 연결시 필요한 핸들러 클래스 생성
     private static class MyHandler extends Handler {
         private final WeakReference<MainActivity> weakReference;
 
@@ -129,9 +97,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-
-
+    //서버 연결
     public void  getJSON() {
 
         Thread thread = new Thread(new Runnable() {
@@ -201,6 +167,7 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
+    //바코드 인식 기능
     public void scanBarcode(View view) {
 
 
@@ -241,12 +208,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //로그인 체크 함수
+    //Login상태 => 로그아웃 버튼
+    //Logout상태 => SignInActivity로 이동(MainActivity -> SignInActivity -> MainActivity)
+
     private void checkLogin() {
         Log.d("TAG","checkLogin start");
         if (AccessToken.getCurrentAccessToken() != null) {
             //로그인 되어있는 상태
             Log.d("TAG","로그인 되어있음");
-            Log.d("accessToken",AccessToken.getCurrentAccessToken().getToken());
             logoutBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -256,9 +226,36 @@ public class MainActivity extends AppCompatActivity {
             });
         } else {
             //로그아웃 되어있는 상태
+            Log.d("TAG","로그아웃 상태");
             Intent i = new Intent(MainActivity.this, SignInActivity.class);
             startActivity(i);
             finish();
         }
     }
+
+    //프로필 사진
+        /*Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+
+                    InputStream is =conn.getInputStream();
+                    bitmap = BitmapFactory.decodeStream(is);
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+        try{
+            thread.join();
+            imgView.setImageBitmap(bitmap);
+        }catch(Exception e){
+            e.printStackTrace();
+        }*/
 }
