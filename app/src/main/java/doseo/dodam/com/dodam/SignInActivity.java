@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
@@ -27,7 +28,12 @@ import com.facebook.login.LoginResult;
 import org.json.JSONObject;
 
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 
 import doseo.dodam.com.dodam.Dialog.CustomDialog;
@@ -39,7 +45,7 @@ import doseo.dodam.com.dodam.Dialog.CustomDialog;
 
 public class SignInActivity extends AppCompatActivity{
 
-    private Button customLoginButton;
+    private ImageButton customLoginButton;
     private CallbackManager callbackManager;
     private int existUserCheck = 0; //0 회원가입 ,1 로그인
 
@@ -74,7 +80,7 @@ public class SignInActivity extends AppCompatActivity{
 
             setContentView(R.layout.activity_sign_in);
             callbackManager = CallbackManager.Factory.create();  //로그인 응답을 처리할 콜백 관리자
-            customLoginButton = (Button) findViewById(R.id.loginBtn);
+            customLoginButton = (ImageButton) findViewById(R.id.loginBtn);
             Login();
         }
     }
@@ -116,7 +122,7 @@ public class SignInActivity extends AppCompatActivity{
 
     private void Login() {
         Log.d("TAG","Login start");
-        customLoginButton.setText("로구인");
+        //customLoginButton.setText("로구인");
         customLoginButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -153,11 +159,14 @@ public class SignInActivity extends AppCompatActivity{
                                                     //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
                                                     setResult(RESULT_OK);
 
-                                                    if (true/*isInital() == 0*/) {
+                                                    if (isInitial() == 0) {
                                                         //회원가입
                                                         //postUser();
-                                                    } else if (true/*isInital() == 1*/) {
+                                                    } else if (isInitial() == 1) {
                                                         //로그인 -> mainActivity로 넘어간다.
+                                                    }
+                                                    else {
+                                                        Log.d("Error Tag", "ERROR from Server: isInitial returned -1 ");
                                                     }
                                                     //MainActivity.currentUser.setUserId(user.getString("id"));
                                                     //MainActivity.currentUser.setUserName(user.getString("name"));
@@ -211,6 +220,99 @@ public class SignInActivity extends AppCompatActivity{
 
 
         });
+    }
+
+    private int isInitial(){
+        //facebook accessToken()
+        String userId = AccessToken.getCurrentAccessToken().getUserId();
+        int existenceFlag = getUserInfo(userId);
+
+        if(existenceFlag == 0){
+            //회원 정보가 server DB에 존재하지 않을 경우
+            return 0;
+        }
+        else if(existenceFlag == 1){
+            //회원 정보가 server Db에 존재하는 경우
+            return 1;
+        }
+
+        //error
+        return -1;
+    }
+
+    public int  getUserInfo(final String userId) {
+
+        Thread thread = new Thread(new Runnable() {
+
+            public void run() {
+
+                String result;
+                String REQUEST_URL = "http://13.125.145.191:8000/users/exist?userId=" + userId;
+
+                try {
+                    Log.d("LOG: ","getJSON_RUN started");
+                    URL url = new URL(REQUEST_URL);
+                    Log.d("LOG: ",REQUEST_URL);
+                    HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
+
+
+                    httpURLConnection.setReadTimeout(3000);
+                    httpURLConnection.setConnectTimeout(3000);
+                    //httpURLConnection.setDoOutput(true);
+                    httpURLConnection.setDoInput(true);
+                    httpURLConnection.setRequestMethod("GET");
+                    httpURLConnection.setUseCaches(false);
+                    httpURLConnection.connect();
+
+
+
+                    int responseStatusCode = httpURLConnection.getResponseCode();
+
+                    InputStream inputStream;
+                    if (responseStatusCode == HttpURLConnection.HTTP_OK) {
+                        Log.d("LOG: ","responseStatusCode OK");
+                        inputStream = httpURLConnection.getInputStream();
+                    } else {
+                        Log.d("LOG: ","responseStatusCode NON OK");
+                        Log.d("LOG: ",String.valueOf(responseStatusCode));
+                        inputStream = httpURLConnection.getErrorStream();
+
+                    }
+
+
+                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
+                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+
+
+                    while ((line = bufferedReader.readLine()) != null) {
+                        sb.append(line);
+                    }
+
+                    bufferedReader.close();
+                    httpURLConnection.disconnect();
+
+                    result = sb.toString().trim();
+
+                    Log.d("Tag", result);
+
+
+                } catch (Exception e) {
+                    result = e.toString();
+                    Log.d("LOG: ",result);
+                }
+
+
+                Message message = mHandler.obtainMessage(101, result);
+                mHandler.sendMessage(message);
+            }
+
+        });
+        thread.start();
+
+        return -1;
     }
 
 }
