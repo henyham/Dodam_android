@@ -1,6 +1,9 @@
 package doseo.dodam.com.dodam;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -8,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -26,6 +30,8 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
+import doseo.dodam.com.dodam.Dialog.CustomDialog;
+
 
 /**
  * Created by Administrator on 2018-02-12.
@@ -36,6 +42,28 @@ public class SignInActivity extends AppCompatActivity{
     private Button customLoginButton;
     private CallbackManager callbackManager;
     private int existUserCheck = 0; //0 회원가입 ,1 로그인
+
+    //커스텀 다이얼로그
+    private CustomDialog mCustomDialog;
+
+    //인터넷 연결 확인 변수
+    public static final String WIFE_STATE = "WIFE";
+    public static final String MOBILE_STATE = "MOBILE";
+    public static final String NONE_STATE = "NONE";
+
+    public static String getWhatKindOfNetwork(Context context){
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        //getActiveNetworkInfo() -> 인터넷이 연결돼있는 경우 인터넷 환경에 대한 여러가지 정보를 담은 객체를 리턴
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork != null) {
+            if (activeNetwork.getType() == ConnectivityManager.TYPE_WIFI) {
+                return WIFE_STATE;
+            } else if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+                return MOBILE_STATE;
+            }
+        }
+        return NONE_STATE;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,79 +113,103 @@ public class SignInActivity extends AppCompatActivity{
         }
     }
 
+
     private void Login() {
         Log.d("TAG","Login start");
         customLoginButton.setText("로구인");
         customLoginButton.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View view) {
-                //LoginManager - 요청된 읽기 또는 게시 권한으로 로그인 절차를 시작합니다.
-                LoginManager.getInstance().logInWithReadPermissions(SignInActivity.this,
-                        Arrays.asList("public_profile"));
-                LoginManager.getInstance().registerCallback(callbackManager,
-                        new FacebookCallback<LoginResult>() {
-                            @Override
-                            public void onSuccess(LoginResult loginResult) {
-                                Log.e("onSuccess", "onSuccess");
-                                GraphRequest request;
-                                request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+                if(getWhatKindOfNetwork(getApplicationContext()) == NONE_STATE){
+                    //커스텀 다이얼로그 띄워주기
+                    mCustomDialog = new CustomDialog(SignInActivity.this, "인터넷 연결을 해주세요.", singleListener);
+                    mCustomDialog.show();
 
-                                    @Override
-                                    public void onCompleted(JSONObject user, GraphResponse response) {
-                                        if (response.getError() != null) {
+                    //확인 버튼 누른후 SignInActivity Reload
+//                    Intent intent = new Intent(SignInActivity.this, SignInActivity.class);
+//                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+//                    startActivity(intent);
+                }
+                else {
+                    //LoginManager - 요청된 읽기 또는 게시 권한으로 로그인 절차를 시작합니다.
+                    LoginManager.getInstance().logInWithReadPermissions(SignInActivity.this,
+                            Arrays.asList("public_profile"));
+                    LoginManager.getInstance().registerCallback(callbackManager,
+                            new FacebookCallback<LoginResult>() {
+                                @Override
+                                public void onSuccess(LoginResult loginResult) {
+                                    Log.e("onSuccess", "onSuccess");
+                                    GraphRequest request;
+                                    request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
 
-                                        } else {
-                                            try{
-                                                Log.i("TAG", "user: " + user.toString());
-                                                //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
-                                                setResult(RESULT_OK);
+                                        @Override
+                                        public void onCompleted(JSONObject user, GraphResponse response) {
+                                            if (response.getError() != null) {
 
-                                                if(true/*isInital() == 0*/){
-                                                    //회원가입
-                                                    //postUser();
-                                                }
-                                                else if(true/*isInital() == 1*/){
-                                                    //로그인 -> mainActivity로 넘어간다.
-                                                }
-                                                //MainActivity.currentUser.setUserId(user.getString("id"));
-                                                //MainActivity.currentUser.setUserName(user.getString("name"));
+                                            } else {
+                                                try {
+                                                    Log.i("TAG", "user: " + user.toString());
+                                                    //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
+                                                    setResult(RESULT_OK);
 
-                                                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-                                                startActivity(intent);
-                                                finish();
+                                                    if (true/*isInital() == 0*/) {
+                                                        //회원가입
+                                                        //postUser();
+                                                    } else if (true/*isInital() == 1*/) {
+                                                        //로그인 -> mainActivity로 넘어간다.
+                                                    }
+                                                    //MainActivity.currentUser.setUserId(user.getString("id"));
+                                                    //MainActivity.currentUser.setUserName(user.getString("name"));
+
+                                                    Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+                                                    startActivity(intent);
+                                                    finish();
 
 
                                             /*//프로필 사진 저장하기
                                             Profile profile = Profile.getCurrentProfile();
                                             MainActivity.currentUser.setUserProfile("https://graph.facebook.com/" + MainActivity.currentUser.getUserId() + "/picture?type=large");*/
-                                            }
-                                            catch(Exception e){
-                                                String result = e.toString();
-                                                Log.d("LOG: ",result);
+                                                } catch (Exception e) {
+                                                    String result = e.toString();
+                                                    Log.d("LOG: ", result);
 
+                                                }
                                             }
                                         }
-                                    }
-                                });
-                                Bundle parameters = new Bundle();
-                                parameters.putString("fields", "id,name,email,gender,birthday");
-                                request.setParameters(parameters);
-                                request.executeAsync();
+                                    });
+                                    Bundle parameters = new Bundle();
+                                    parameters.putString("fields", "id,name,email,gender,birthday");
+                                    request.setParameters(parameters);
+                                    request.executeAsync();
 
 
-                            }
+                                }
 
-                            @Override
-                            public void onCancel() {
-                                Log.e("onCancel", "onCancel");
-                            }
+                                @Override
+                                public void onCancel() {
+                                    Log.e("onCancel", "onCancel");
+                                }
 
-                            @Override
-                            public void onError(FacebookException exception) {
-                                Log.e("onError", "onError " + exception.getLocalizedMessage());
-                            }
-                        });
+                                @Override
+                                public void onError(FacebookException exception) {
+                                    Log.e("onError", "onError " + exception.getLocalizedMessage());
+                                }
+                            });
+                }
             }
+
+            private View.OnClickListener singleListener = new View.OnClickListener() {
+                public void onClick(View v) {
+//                    Toast.makeText(getApplicationContext(), "확인",
+//                            Toast.LENGTH_SHORT).show();
+//                    mCustomDialog.dismiss();
+//
+
+                }
+            };
+
+
         });
     }
 
