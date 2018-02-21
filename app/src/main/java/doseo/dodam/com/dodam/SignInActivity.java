@@ -41,8 +41,6 @@ public class SignInActivity extends AppCompatActivity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext()); // SDK 초기화 (setContentView 보다 먼저 실행되어야합니다. 안그럼 에러납니다.)
-        AccessToken mFacebookAccessToken = getAppPreferences(this, "ACCESS_TOKEN");
-        mFacebook.setAccessToken(mFacebookAccessToken);
 
         setContentView(R.layout.activity_sign_in);
         callbackManager = CallbackManager.Factory.create();  //로그인 응답을 처리할 콜백 관리자
@@ -72,11 +70,11 @@ public class SignInActivity extends AppCompatActivity{
                                                 //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
                                                 setResult(RESULT_OK);
 
-                                                if(isInital() == 0){
+                                                if(true/*isInital() == 0*/){
                                                     //회원가입
                                                     //postUser();
                                                 }
-                                                else if(isInital() == 1){
+                                                else if(true/*isInital() == 1*/){
                                                     //로그인 -> mainActivity로 넘어간다.
                                                 }
                                                 //MainActivity.currentUser.setUserId(user.getString("id"));
