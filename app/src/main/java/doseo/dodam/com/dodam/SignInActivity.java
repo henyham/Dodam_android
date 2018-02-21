@@ -33,7 +33,7 @@ import java.util.Arrays;
 
 public class SignInActivity extends AppCompatActivity{
 
-    private Button CustomloginButton;
+    private Button customLoginButton;
     private CallbackManager callbackManager;
     private int existUserCheck = 0; //0 회원가입 ,1 로그인
 
@@ -42,81 +42,13 @@ public class SignInActivity extends AppCompatActivity{
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext()); // SDK 초기화 (setContentView 보다 먼저 실행되어야합니다. 안그럼 에러납니다.)
 
-        setContentView(R.layout.activity_sign_in);
-        callbackManager = CallbackManager.Factory.create();  //로그인 응답을 처리할 콜백 관리자
+        if(AccessToken.getCurrentAccessToken() == null) {
 
-        CustomloginButton = (Button)findViewById(R.id.loginBtn);
-        CustomloginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //LoginManager - 요청된 읽기 또는 게시 권한으로 로그인 절차를 시작합니다.
-                LoginManager.getInstance().logInWithReadPermissions(SignInActivity.this,
-                        Arrays.asList("public_profile"));
-                LoginManager.getInstance().registerCallback(callbackManager,
-                        new FacebookCallback<LoginResult>() {
-                            @Override
-                            public void onSuccess(LoginResult loginResult) {
-                                Log.e("onSuccess", "onSuccess");
-                                GraphRequest request;
-                                request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
-
-                                    @Override
-                                    public void onCompleted(JSONObject user, GraphResponse response) {
-                                        if (response.getError() != null) {
-
-                                        } else {
-                                            try{
-                                                Log.i("TAG", "user: " + user.toString());
-                                                //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
-                                                setResult(RESULT_OK);
-
-                                                if(true/*isInital() == 0*/){
-                                                    //회원가입
-                                                    //postUser();
-                                                }
-                                                else if(true/*isInital() == 1*/){
-                                                    //로그인 -> mainActivity로 넘어간다.
-                                                }
-                                                //MainActivity.currentUser.setUserId(user.getString("id"));
-                                                //MainActivity.currentUser.setUserName(user.getString("name"));
-
-                                                /*//프로필 사진 저장하기
-                                                Profile profile = Profile.getCurrentProfile();
-                                                MainActivity.currentUser.setUserProfile("https://graph.facebook.com/" + MainActivity.currentUser.getUserId() + "/picture?type=large");*/
-
-                                                /*Intent i = new Intent(SignInActivity.this, MainActivity.class);
-                                                startActivity(i);
-                                                finish();*/
-
-                                            }
-                                            catch(Exception e){
-                                                String result = e.toString();
-                                                Log.d("LOG: ",result);
-
-                                            }
-                                        }
-                                    }
-                                });
-                                Bundle parameters = new Bundle();
-                                parameters.putString("fields", "id,name,email,gender,birthday");
-                                request.setParameters(parameters);
-                                request.executeAsync();
-
-
-                            }
-
-                            @Override
-                            public void onCancel() {
-                                Log.e("onCancel", "onCancel");
-                            }
-
-                            @Override
-                            public void onError(FacebookException exception) {
-                                Log.e("onError", "onError " + exception.getLocalizedMessage());
-                            }
-                        });
-            }
-        });
+            setContentView(R.layout.activity_sign_in);
+            callbackManager = CallbackManager.Factory.create();  //로그인 응답을 처리할 콜백 관리자
+            customLoginButton = (Button) findViewById(R.id.loginBtn);
+            Login();
+        }
     }
 
     @Override
@@ -153,5 +85,80 @@ public class SignInActivity extends AppCompatActivity{
         }
     }
 
-    //
+    private void Login() {
+        Log.d("TAG","Login start");
+        customLoginButton.setText("로구인");
+        customLoginButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //LoginManager - 요청된 읽기 또는 게시 권한으로 로그인 절차를 시작합니다.
+                LoginManager.getInstance().logInWithReadPermissions(SignInActivity.this,
+                        Arrays.asList("public_profile"));
+                LoginManager.getInstance().registerCallback(callbackManager,
+                        new FacebookCallback<LoginResult>() {
+                            @Override
+                            public void onSuccess(LoginResult loginResult) {
+                                Log.e("onSuccess", "onSuccess");
+                                GraphRequest request;
+                                request = GraphRequest.newMeRequest(loginResult.getAccessToken(), new GraphRequest.GraphJSONObjectCallback() {
+
+                                    @Override
+                                    public void onCompleted(JSONObject user, GraphResponse response) {
+                                        if (response.getError() != null) {
+
+                                        } else {
+                                            try{
+                                                Log.i("TAG", "user: " + user.toString());
+                                                //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
+                                                setResult(RESULT_OK);
+
+                                                if(true/*isInital() == 0*/){
+                                                    //회원가입
+                                                    //postUser();
+                                                }
+                                                else if(true/*isInital() == 1*/){
+                                                    //로그인 -> mainActivity로 넘어간다.
+                                                }
+                                                //MainActivity.currentUser.setUserId(user.getString("id"));
+                                                //MainActivity.currentUser.setUserName(user.getString("name"));
+
+                                                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+                                                startActivity(intent);
+                                                finish();
+
+
+                                            /*//프로필 사진 저장하기
+                                            Profile profile = Profile.getCurrentProfile();
+                                            MainActivity.currentUser.setUserProfile("https://graph.facebook.com/" + MainActivity.currentUser.getUserId() + "/picture?type=large");*/
+                                            }
+                                            catch(Exception e){
+                                                String result = e.toString();
+                                                Log.d("LOG: ",result);
+
+                                            }
+                                        }
+                                    }
+                                });
+                                Bundle parameters = new Bundle();
+                                parameters.putString("fields", "id,name,email,gender,birthday");
+                                request.setParameters(parameters);
+                                request.executeAsync();
+
+
+                            }
+
+                            @Override
+                            public void onCancel() {
+                                Log.e("onCancel", "onCancel");
+                            }
+
+                            @Override
+                            public void onError(FacebookException exception) {
+                                Log.e("onError", "onError " + exception.getLocalizedMessage());
+                            }
+                        });
+            }
+        });
+    }
+
 }

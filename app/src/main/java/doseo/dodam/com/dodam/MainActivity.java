@@ -16,6 +16,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.FacebookSdk;
+import com.facebook.login.LoginManager;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
@@ -37,25 +40,29 @@ public class MainActivity extends AppCompatActivity {
     private String REQUEST_URL = SEARCH_URL;
     private Bitmap bitmap;
     final static User currentUser = new User();
+    private Button logoutBtn, buttonRequestJSON;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_main);
 
-        Button buttonRequestJSON = (Button)findViewById(R.id.button_main_requestjson);
-        //Button button = (Button)findViewById(R.id.button_go_login);
+        buttonRequestJSON = (Button)findViewById(R.id.button_main_requestjson);
+        logoutBtn = (Button)findViewById(R.id.logout_btn);
         imgView = (ImageView)findViewById(R.id.user_profile_pic);
         textviewJSONText = (TextView)findViewById(R.id.textview_main_jsontext);
+
+        checkLogin();
 
         textviewJSONText.setMovementMethod(new ScrollingMovementMethod());
 
         //프로필 사진
-        Thread thread = new Thread(new Runnable() {
+        /*Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try{
-                    URL url = new URL(currentUser.getUserProfile());
+                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
                     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
                     conn.setDoInput(true);
                     conn.connect();
@@ -75,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         }catch(Exception e){
             e.printStackTrace();
         }
-
+*/
         /*button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -231,6 +238,27 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // This is important, otherwise the result will not be passed to the fragment
             super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void checkLogin() {
+        Log.d("TAG","checkLogin start");
+        if (AccessToken.getCurrentAccessToken() != null) {
+            //로그인 되어있는 상태
+            Log.d("TAG","로그인 되어있음");
+            Log.d("accessToken",AccessToken.getCurrentAccessToken().getToken());
+            logoutBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    LoginManager.getInstance().logOut();
+                    checkLogin();
+                }
+            });
+        } else {
+            //로그아웃 되어있는 상태
+            Intent i = new Intent(MainActivity.this, SignInActivity.class);
+            startActivity(i);
+            finish();
         }
     }
 }
