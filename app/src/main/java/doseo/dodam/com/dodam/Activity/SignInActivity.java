@@ -1,4 +1,4 @@
-package doseo.dodam.com.dodam;
+package doseo.dodam.com.dodam.Activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -10,9 +10,7 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -21,7 +19,6 @@ import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 
@@ -37,6 +34,7 @@ import java.net.URL;
 import java.util.Arrays;
 
 import doseo.dodam.com.dodam.Dialog.CustomDialog;
+import doseo.dodam.com.dodam.R;
 
 
 /**
@@ -45,9 +43,9 @@ import doseo.dodam.com.dodam.Dialog.CustomDialog;
 
 public class SignInActivity extends AppCompatActivity{
 
-    private ImageButton customLoginButton;
+    private ImageButton kakaoLoginBtn, facebookLoginBtn;
     private CallbackManager callbackManager;
-    private int existUserCheck = 0; //0 회원가입 ,1 로그인
+    private static String jsonString;
 
     //커스텀 다이얼로그
     private CustomDialog mCustomDialog;
@@ -74,13 +72,15 @@ public class SignInActivity extends AppCompatActivity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext()); // SDK 초기화 (setContentView 보다 먼저 실행되어야합니다. 안그럼 에러납니다.)
+        FacebookSdk.sdkInitialize(getApplicationContext()); // SDK 초기화
 
+        //현재 로그아웃 상태이면
         if(AccessToken.getCurrentAccessToken() == null) {
 
             setContentView(R.layout.activity_sign_in);
             callbackManager = CallbackManager.Factory.create();  //로그인 응답을 처리할 콜백 관리자
-            customLoginButton = (ImageButton) findViewById(R.id.loginBtn);
+            facebookLoginBtn = (ImageButton) findViewById(R.id.facebook_login_btn);
+            kakaoLoginBtn = (ImageButton)findViewById(R.id.kakao_login_btn);
             Login();
         }
     }
@@ -111,7 +111,7 @@ public class SignInActivity extends AppCompatActivity{
 
                     case 101:
 
-                        String jsonString = (String)msg.obj;
+                        jsonString = (String)msg.obj;
                         //jsonString에 결과값 있음
                         break;
                 }
@@ -121,24 +121,24 @@ public class SignInActivity extends AppCompatActivity{
 
 
     private void Login() {
-        Log.d("TAG","Login start");
-        //customLoginButton.setText("로구인");
-        customLoginButton.setOnClickListener(new View.OnClickListener() {
+        Log.d("TAG","Login() start");
+        facebookLoginBtn.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View view) {
+                //인터넷 연결 확인
                 if(getWhatKindOfNetwork(getApplicationContext()) == NONE_STATE){
                     //커스텀 다이얼로그 띄워주기
                     mCustomDialog = new CustomDialog(SignInActivity.this, "인터넷 연결을 해주세요.", singleListener);
                     mCustomDialog.show();
 
                     //확인 버튼 누른후 SignInActivity Reload
-//                    Intent intent = new Intent(SignInActivity.this, SignInActivity.class);
-//                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-//                    startActivity(intent);
+                    //Intent intent = new Intent(SignInActivity.this, SignInActivity.class);
+                    //intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    //startActivity(intent);
                 }
                 else {
-                    //LoginManager - 요청된 읽기 또는 게시 권한으로 로그인 절차를 시작합니다.
+                    //LoginManager - 요청된 읽기 또는 게시 권한으로 로그인 절차를 시작
                     LoginManager.getInstance().logInWithReadPermissions(SignInActivity.this,
                             Arrays.asList("public_profile"));
                     LoginManager.getInstance().registerCallback(callbackManager,
@@ -157,19 +157,19 @@ public class SignInActivity extends AppCompatActivity{
                                                 try {
                                                     Log.i("TAG", "user: " + user.toString());
                                                     //Log.i("TAG", "AccessToken: " + loginResult.getAccessToken().getToken());
+                                                    MainActivity.currentUser.setUserId(user.getString("id"));
+                                                    MainActivity.currentUser.setUserName(user.getString("name"));
                                                     setResult(RESULT_OK);
 
                                                     if (isInitial() == 0) {
                                                         //회원가입
                                                         //postUser();
                                                     } else if (isInitial() == 1) {
-                                                        //로그인 -> mainActivity로 넘어간다.
+
                                                     }
                                                     else {
                                                         Log.d("Error Tag", "ERROR from Server: isInitial returned -1 ");
                                                     }
-                                                    //MainActivity.currentUser.setUserId(user.getString("id"));
-                                                    //MainActivity.currentUser.setUserName(user.getString("name"));
 
                                                     Intent intent = new Intent(SignInActivity.this, MainActivity.class);
                                                     startActivity(intent);
@@ -207,40 +207,39 @@ public class SignInActivity extends AppCompatActivity{
                             });
                 }
             }
-
-            private View.OnClickListener singleListener = new View.OnClickListener() {
-                public void onClick(View v) {
-//                    Toast.makeText(getApplicationContext(), "확인",
-//                            Toast.LENGTH_SHORT).show();
-//                    mCustomDialog.dismiss();
-//
-
-                }
-            };
-
-
         });
     }
 
+    private View.OnClickListener singleListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            //Toast.makeText(getApplicationContext(), "확인", Toast.LENGTH_SHORT).show();
+            mCustomDialog.dismiss();
+        }
+    };
+
     private int isInitial(){
-        //facebook accessToken()
         String userId = AccessToken.getCurrentAccessToken().getUserId();
-        int existenceFlag = getUserInfo(userId);
+        Log.d("UserId : ",userId);
+        int existenceFlag= -1;
+        getUserInfo(userId);
+        //JSONObject stringToJson = new JSONObject(jsonString);
 
-        if(existenceFlag == 0){
-            //회원 정보가 server DB에 존재하지 않을 경우
-            return 0;
+        try{
+            //if(jsonObject.getString("userStatus") == "newUser") existenceFlag = 0;
+            //else if(jsonObject.getString("userStatus") == "joinedUser") existenceFlag = 1;
+         //   else    Log.d("ERR existenceFlag = ",String.valueOf(existenceFlag));
         }
-        else if(existenceFlag == 1){
-            //회원 정보가 server Db에 존재하는 경우
-            return 1;
+        catch(Exception e){
+            String result = e.toString();
+            Log.d("LOG: ",result);
         }
 
-        //error
-        return -1;
+        if(existenceFlag == 0) return 0; //회원 정보가 DB에 존재하지 않을 경우 회원 가입
+        else if(existenceFlag == 1) return 1; //존재할 경우 로그인
+        return -1;  //error
     }
 
-    public int  getUserInfo(final String userId) {
+    public int getUserInfo(final String userId) {
 
         Thread thread = new Thread(new Runnable() {
 
@@ -255,7 +254,6 @@ public class SignInActivity extends AppCompatActivity{
                     Log.d("LOG: ",REQUEST_URL);
                     HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
 
-
                     httpURLConnection.setReadTimeout(3000);
                     httpURLConnection.setConnectTimeout(3000);
                     //httpURLConnection.setDoOutput(true);
@@ -263,8 +261,6 @@ public class SignInActivity extends AppCompatActivity{
                     httpURLConnection.setRequestMethod("GET");
                     httpURLConnection.setUseCaches(false);
                     httpURLConnection.connect();
-
-
 
                     int responseStatusCode = httpURLConnection.getResponseCode();
 
@@ -279,13 +275,11 @@ public class SignInActivity extends AppCompatActivity{
 
                     }
 
-
                     InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "UTF-8");
                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
                     StringBuilder sb = new StringBuilder();
                     String line;
-
 
                     while ((line = bufferedReader.readLine()) != null) {
                         sb.append(line);
@@ -295,7 +289,6 @@ public class SignInActivity extends AppCompatActivity{
                     httpURLConnection.disconnect();
 
                     result = sb.toString().trim();
-
                     Log.d("Tag", result);
 
 
@@ -303,7 +296,6 @@ public class SignInActivity extends AppCompatActivity{
                     result = e.toString();
                     Log.d("LOG: ",result);
                 }
-
 
                 Message message = mHandler.obtainMessage(101, result);
                 mHandler.sendMessage(message);
@@ -314,5 +306,7 @@ public class SignInActivity extends AppCompatActivity{
 
         return -1;
     }
+
+
 
 }

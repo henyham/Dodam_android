@@ -1,4 +1,4 @@
-package doseo.dodam.com.dodam;
+package doseo.dodam.com.dodam.Activity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -27,7 +27,9 @@ import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
 import doseo.dodam.com.dodam.Object.User;
+import doseo.dodam.com.dodam.R;
 
 
 public class MainActivity extends AppCompatActivity {

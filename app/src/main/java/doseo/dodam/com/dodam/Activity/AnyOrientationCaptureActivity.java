@@ -1,4 +1,4 @@
-package doseo.dodam.com.dodam;
+package doseo.dodam.com.dodam.Activity;
 
 import com.journeyapps.barcodescanner.CaptureActivity;
 
