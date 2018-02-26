@@ -1,5 +1,12 @@
 package doseo.dodam.com.dodam.Object;
 
+import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
 /**
  * Created by 조현정 on 2018-02-05.
  */
@@ -10,6 +17,7 @@ public class Book {
     private String title;
     private String category_name;
     private String book_cover;
+    private ArrayList<String> book_authors = new ArrayList<String>();
     private String publisher;
     private int fixed_price;
     private String pub_date;    //자료형 체크하기
@@ -47,6 +55,10 @@ public class Book {
         this.book_cover = book_cover;
     }
 
+    public ArrayList<String> getBook_authors() {return book_authors;}
+
+    public void setBook_authors(ArrayList<String> book_authors) {this.book_authors = book_authors;}
+
     public String getPublisher() {
         return publisher;
     }
@@ -77,5 +89,27 @@ public class Book {
 
     public void setReview(String review) {
         this.review = review;
+    }
+
+    public void setBookAttribute(JSONObject j){
+        try{
+            this.isbn = j.getJSONArray("documents").getJSONObject(0).getString("isbn");
+            this.title = j.getJSONArray("documents").getJSONObject(0).getString("title");
+            this.category_name = j.getJSONArray("documents").getJSONObject(0).getString("category");
+            this.book_cover = j.getJSONArray("documents").getJSONObject(0).getString("thumbnail");
+
+            int i=0;
+            while(j.getJSONArray("documents").getJSONObject(0).getJSONArray("authors").length() <i){
+                book_authors.add(i,j.getJSONArray("documents").getJSONObject(0).getJSONArray("authors").getString(i));
+                i++;
+            }
+            this.publisher =j.getJSONArray("documents").getJSONObject(0).getString("publisher");
+            this.fixed_price = Integer.parseInt(j.getJSONArray("documents").getJSONObject(0).getString("price"));
+            this.pub_date = j.getJSONArray("documents").getJSONObject(0).getString("datetime").substring(0,10);
+
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+
     }
 }
