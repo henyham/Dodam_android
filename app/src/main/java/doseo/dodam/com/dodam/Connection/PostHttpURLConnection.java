@@ -1,6 +1,7 @@
 package doseo.dodam.com.dodam.Connection;
 
 import android.content.ContentValues;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,13 +41,16 @@ public class PostHttpURLConnection {
                 value = parameter.getValue().toString();
 
                 //파라미터가 두개 이상일 때 &사용
-                if(isAnd)   sbParams.append("&");
+                if(isAnd)
+                    sbParams.append("&");
+
                 sbParams.append(key).append("=").append(value);
 
                 //파라미터가 2개 이상이면 isAnd를 true로 바꾸고 다음 루프부터 &붙임
-                if(isAnd)
+                if(!isAnd)
                     if(_params.size() >= 2) isAnd = true;
             }
+            Log.d("sbParams",sbParams.toString());
         }
 
         /**

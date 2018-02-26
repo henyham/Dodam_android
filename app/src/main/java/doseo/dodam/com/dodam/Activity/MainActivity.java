@@ -35,13 +35,12 @@ import doseo.dodam.com.dodam.R;
 public class MainActivity extends AppCompatActivity {
 
     private String tmp_isbn;
-    private TextView textviewJSONText;
     private ImageView imgView;
     private String SEARCH_URL = "http://13.125.145.191:8000/test";
     private String REQUEST_URL = SEARCH_URL;
     private Bitmap bitmap;
     final static User currentUser = new User();
-    private Button logoutBtn, buttonRequestJSON;
+    private Button logoutBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,27 +48,105 @@ public class MainActivity extends AppCompatActivity {
         FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_main);
 
-        buttonRequestJSON = (Button)findViewById(R.id.button_main_requestjson);
-        logoutBtn = (Button)findViewById(R.id.logout_btn);
-        imgView = (ImageView)findViewById(R.id.user_profile_pic);
-        textviewJSONText = (TextView)findViewById(R.id.textview_main_jsontext);
+        //위젯 참조
+        logoutBtn = (Button) findViewById(R.id.logout_btn);
+        imgView = (ImageView) findViewById(R.id.user_profile_pic);
 
         checkLogin();
-
-        textviewJSONText.setMovementMethod(new ScrollingMovementMethod());
-
-        buttonRequestJSON.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Log.d("LOG: ","CLICKED BUTTON");
-                getJSON();
-            }
-        });
-
     }
 
-    //서버 연결시 필요한 핸들러 선언
+    //바코드 인식 기능
+    public void scanBarcode(View view) {
+
+
+        IntentIntegrator integrator = new IntentIntegrator(this);
+
+        //new IntentIntegrator(this).initiateScan();
+
+        integrator.setCaptureActivity(AnyOrientationCaptureActivity.class);
+        integrator.setOrientationLocked(false);
+
+        integrator.initiateScan();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //data = new Intent(MainActivity.this, BarcodeResultActivity.class);
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() == null) {
+                Log.d("MainActivity", "Cancelled scan");
+                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
+            } else {
+                Intent intent = new Intent(getApplicationContext(), BarcodeResultActivity.class);
+                tmp_isbn = result.getContents();
+                if (tmp_isbn.length() == 13) {
+                    intent.putExtra("isbn_type", 13);
+                    Log.d("Scannded isbn13 : ", tmp_isbn);
+                } else {
+                    intent.putExtra("isbn_type", 10);
+                }
+                intent.putExtra("isbn_str", tmp_isbn);
+                startActivity(intent);
+            }
+        } else {
+            // This is important, otherwise the result will not be passed to the fragment
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    //로그인 체크 함수
+    //Login상태 => 로그아웃 버튼
+    //Logout상태 => SignInActivity로 이동(MainActivity -> SignInActivity -> MainActivity)
+    private void checkLogin() {
+        Log.d("TAG", "checkLogin() start");
+        if (AccessToken.getCurrentAccessToken() != null) {
+            //로그인 되어있는 상태
+            Log.d("TAG", "로그인 되어있음");
+            logoutBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    LoginManager.getInstance().logOut();
+                    checkLogin();
+                }
+            });
+        } else {
+            //로그아웃 되어있는 상태
+            Log.d("TAG", "로그아웃 상태");
+            Intent i = new Intent(MainActivity.this, SignInActivity.class);
+            startActivity(i);
+            finish();
+        }
+    }
+}
+
+    //프로필 사진
+        /*Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+
+                    InputStream is =conn.getInputStream();
+                    bitmap = BitmapFactory.decodeStream(is);
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+        try{
+            thread.join();
+            imgView.setImageBitmap(bitmap);
+        }catch(Exception e){
+            e.printStackTrace();
+        }*/
+
+         /*//서버 연결시 필요한 핸들러 선언
     private final MyHandler mHandler = new MyHandler(this);
 
     //서버 연결시 필요한 핸들러 클래스 생성
@@ -166,97 +243,5 @@ public class MainActivity extends AppCompatActivity {
 
         });
         thread.start();
-    }
+    }*/
 
-    //바코드 인식 기능
-    public void scanBarcode(View view) {
-
-
-        IntentIntegrator integrator = new IntentIntegrator(this);
-
-        //new IntentIntegrator(this).initiateScan();
-
-        integrator.setCaptureActivity(AnyOrientationCaptureActivity.class);
-        integrator.setOrientationLocked(false);
-
-        integrator.initiateScan();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //data = new Intent(MainActivity.this, BarcodeResultActivity.class);
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if(result != null) {
-            if(result.getContents() == null) {
-                Log.d("MainActivity", "Cancelled scan");
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
-            } else {
-                Intent intent = new Intent(getApplicationContext(), BarcodeResultActivity.class);
-                tmp_isbn = result.getContents();
-                if(tmp_isbn.length() == 13){
-                    intent.putExtra("isbn_type",13);
-                    Log.d("Scannded isbn13 : " , tmp_isbn);
-                }
-                else {
-                    intent.putExtra("isbn_type",10);
-                }
-                intent.putExtra("isbn_str", tmp_isbn);
-                startActivity(intent);
-            }
-        } else {
-            // This is important, otherwise the result will not be passed to the fragment
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
-    //로그인 체크 함수
-    //Login상태 => 로그아웃 버튼
-    //Logout상태 => SignInActivity로 이동(MainActivity -> SignInActivity -> MainActivity)
-
-    private void checkLogin() {
-        Log.d("TAG","checkLogin start");
-        if (AccessToken.getCurrentAccessToken() != null) {
-            //로그인 되어있는 상태
-            Log.d("TAG","로그인 되어있음");
-            logoutBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    LoginManager.getInstance().logOut();
-                    checkLogin();
-                }
-            });
-        } else {
-            //로그아웃 되어있는 상태
-            Log.d("TAG","로그아웃 상태");
-            Intent i = new Intent(MainActivity.this, SignInActivity.class);
-            startActivity(i);
-            finish();
-        }
-    }
-
-    //프로필 사진
-        /*Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setDoInput(true);
-                    conn.connect();
-
-                    InputStream is =conn.getInputStream();
-                    bitmap = BitmapFactory.decodeStream(is);
-
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-        try{
-            thread.join();
-            imgView.setImageBitmap(bitmap);
-        }catch(Exception e){
-            e.printStackTrace();
-        }*/
-}
