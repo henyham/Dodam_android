@@ -6,8 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Button;
@@ -17,11 +15,8 @@ import android.widget.TextView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -77,6 +72,7 @@ public class BarcodeResultActivity extends AppCompatActivity {
         //URL 설정
         REQUEST_URL = "https://dapi.kakao.com//v2/search/book?target=isbn&query="+isbn_str;
 
+        resultBook.setIsbn(isbn_str);
         //AsyncTask를 통해 HttpURLConnection 수행
         SearchBook searchBook = new SearchBook(REQUEST_URL,"Authorization", "KakaoAK " + getResources().getString(R.string.kakao_app_rest_key),null);
         searchBook.execute();

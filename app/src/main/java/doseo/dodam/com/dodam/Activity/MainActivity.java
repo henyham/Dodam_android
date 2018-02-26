@@ -55,46 +55,6 @@ public class MainActivity extends AppCompatActivity {
         checkLogin();
     }
 
-    //바코드 인식 기능
-    public void scanBarcode(View view) {
-
-
-        IntentIntegrator integrator = new IntentIntegrator(this);
-
-        //new IntentIntegrator(this).initiateScan();
-
-        integrator.setCaptureActivity(AnyOrientationCaptureActivity.class);
-        integrator.setOrientationLocked(false);
-
-        integrator.initiateScan();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //data = new Intent(MainActivity.this, BarcodeResultActivity.class);
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if (result != null) {
-            if (result.getContents() == null) {
-                Log.d("MainActivity", "Cancelled scan");
-                Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
-            } else {
-                Intent intent = new Intent(getApplicationContext(), BarcodeResultActivity.class);
-                tmp_isbn = result.getContents();
-                if (tmp_isbn.length() == 13) {
-                    intent.putExtra("isbn_type", 13);
-                    Log.d("Scannded isbn13 : ", tmp_isbn);
-                } else {
-                    intent.putExtra("isbn_type", 10);
-                }
-                intent.putExtra("isbn_str", tmp_isbn);
-                startActivity(intent);
-            }
-        } else {
-            // This is important, otherwise the result will not be passed to the fragment
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
-
     //로그인 체크 함수
     //Login상태 => 로그아웃 버튼
     //Logout상태 => SignInActivity로 이동(MainActivity -> SignInActivity -> MainActivity)
@@ -117,6 +77,11 @@ public class MainActivity extends AppCompatActivity {
             startActivity(i);
             finish();
         }
+    }
+
+    public void searchBook(View view){
+        Intent intent = new Intent(MainActivity.this, SearchBookActivity.class);
+        startActivity(intent);
     }
 }
 

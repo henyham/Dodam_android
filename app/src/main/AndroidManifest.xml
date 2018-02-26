@@ -37,6 +37,7 @@
 
         <activity android:name=".Activity.BarcodeResultActivity"/>
         <activity android:name=".Activity.SignInActivity"/>
+        <activity android:name=".Activity.SearchBookActivity"/>
 
         <activity
         android:name="com.facebook.FacebookActivity"

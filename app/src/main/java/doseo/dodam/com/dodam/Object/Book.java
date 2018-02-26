@@ -93,7 +93,6 @@ public class Book {
 
     public void setBookAttribute(JSONObject j){
         try{
-            this.isbn = j.getJSONArray("documents").getJSONObject(0).getString("isbn");
             this.title = j.getJSONArray("documents").getJSONObject(0).getString("title");
             this.category_name = j.getJSONArray("documents").getJSONObject(0).getString("category");
             this.book_cover = j.getJSONArray("documents").getJSONObject(0).getString("thumbnail");
