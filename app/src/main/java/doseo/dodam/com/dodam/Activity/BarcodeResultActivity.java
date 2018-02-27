@@ -152,9 +152,12 @@ public class BarcodeResultActivity extends AppCompatActivity {
 
                 bookTitle.setText(resultBook.getTitle());
                 int idx = 0;
-                String authors = null;
-                while(resultBook.getBook_authors().size()<idx){
+                String authors = "";
+
+                while(resultBook.getBook_authors().size()>idx){
                     authors += resultBook.getBook_authors().get(idx);
+                    if(idx != resultBook.getBook_authors().size()-1)
+                        authors += " ";
                     idx++;
                 }
                 bookWriter.setText(authors);

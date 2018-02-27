@@ -97,8 +97,12 @@ public class Book {
             this.category_name = j.getJSONArray("documents").getJSONObject(0).getString("category");
             this.book_cover = j.getJSONArray("documents").getJSONObject(0).getString("thumbnail");
 
-            int i=0;
-            while(j.getJSONArray("documents").getJSONObject(0).getJSONArray("authors").length() <i){
+            int i = this.book_cover.indexOf("?");
+            String tmp_image_url = this.book_cover.substring(i+1);
+            this.book_cover = "http://t1.daumcdn.net/thumb/R155x225/?" + tmp_image_url;
+
+            i=0;
+            while(j.getJSONArray("documents").getJSONObject(0).getJSONArray("authors").length() >i){
                 book_authors.add(i,j.getJSONArray("documents").getJSONObject(0).getJSONArray("authors").getString(i));
                 i++;
             }
@@ -111,4 +115,6 @@ public class Book {
         }
 
     }
+
+
 }
