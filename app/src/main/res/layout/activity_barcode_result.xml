@@ -8,46 +8,49 @@
         android:id="@+id/book_info_relative"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true">
 
         <ImageView
             android:id="@+id/book_cover"
             android:layout_width="200dp"
             android:layout_height="300dp"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="50dp"/>
+            android:layout_marginTop="50dp" />
 
         <TextView
             android:id="@+id/book_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
             android:layout_below="@id/book_cover"
+            android:layout_centerHorizontal="true"
+            android:gravity="center_horizontal"
             android:layout_marginTop="20dp"
-            android:text="블라블라"
             android:textSize="30dp"
-            />
+            android:fontFamily="@font/font_nanum_square_r"/>
 
         <TextView
             android:id="@+id/book_writer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
             android:layout_below="@id/book_title"
+            android:layout_centerHorizontal="true"
             android:layout_marginTop="10dp"
-            android:text="작가님"
-            android:textSize="20dp"/>
+            android:textSize="20dp"
+            android:fontFamily="@font/font_nanum_square_r"/>
 
 
         <TextView
             android:id="@+id/book_detail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
             android:layout_below="@id/book_writer"
+            android:layout_centerHorizontal="true"
             android:layout_marginTop="5dp"
             android:text="2013.03.15 워크룸프레스 디자인"
-            />
+            android:fontFamily="@font/font_nanum_square_r" />
+
     </RelativeLayout>
 
     <Button
@@ -58,6 +61,7 @@
         android:layout_below="@id/book_info_relative"
         android:layout_marginTop="15dp"
         android:text="읽기 시작하기"
+        android:fontFamily="@font/font_nanum_square_r"
         />
 
 </RelativeLayout>

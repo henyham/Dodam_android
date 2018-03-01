@@ -12,12 +12,17 @@
         android:layout_height="wrap_content"
         android:text="바코드 검색"
         android:layout_marginBottom="50dp"
-        android:onClick = "scanBarcode"/>
+        android:onClick = "scanBarcode"
+        android:fontFamily="@font/font_nanum_square_r"
+        />
 
     <Button
         android:id="@+id/word_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="단어로 검색" />
+        android:text="단어로 검색"
+        android:onClick="searchBookFromWord"
+        android:fontFamily="@font/font_nanum_square_r"
+        />
 
 </LinearLayout>

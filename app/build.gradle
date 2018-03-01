@@ -22,6 +22,9 @@ repositories {
     jcenter {
         url "http://jcenter.bintray.com/"
     }
+    maven {
+        url "https://maven.google.com"
+    }
 }
 
 dependencies {
@@ -38,4 +41,5 @@ dependencies {
     releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5'
 
     compile 'com.facebook.android:facebook-android-sdk:4.4.0'
+
 }
