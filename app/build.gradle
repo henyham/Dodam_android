@@ -42,4 +42,6 @@ dependencies {
 
     compile 'com.facebook.android:facebook-android-sdk:4.4.0'
 
+    compile "com.android.support:percent:26.1.0"
+
 }

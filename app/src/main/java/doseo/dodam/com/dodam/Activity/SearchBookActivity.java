@@ -22,6 +22,7 @@ import doseo.dodam.com.dodam.R;
 public class SearchBookActivity extends AppCompatActivity {
 
     private Button barcodeBtn, wordBtn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,11 +45,17 @@ public class SearchBookActivity extends AppCompatActivity {
         integrator.initiateScan();
     }
 
+    public void searchBookFromWord(View view) {
+        Log.d("progressTag", "In searchBookFromWord function");
+        Intent intent = new Intent(getApplicationContext(), SearchBookResultActivity.class);
+        startActivity(intent);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //data = new Intent(MainActivity.this, BarcodeResultActivity.class);
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if (result != null) {
+            if (result != null) {
             if (result.getContents() == null) {
                 Log.d("MainActivity", "Cancelled scan");
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
