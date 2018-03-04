@@ -9,6 +9,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -35,8 +36,10 @@ import doseo.dodam.com.dodam.R;
 
 public class SearchBookResultActivity extends AppCompatActivity {
 
-    //data from previous intent
-    private JSONArray resultArray;
+    //bok search result data from previous intent
+    private String jsonData;
+    private int pageNum;
+    private String searchStr;
 
     private Button bookSearchBtn;
     private List<String> resultList;
@@ -45,28 +48,34 @@ public class SearchBookResultActivity extends AppCompatActivity {
     private ArrayList<String> arrayList;
     private SearchBookResultAdapter adapter;
 
-
     //요청 url 변수
     private String REQUEST_URL;
+
+    private Boolean lastitemVisibleFlag = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d("progressTag", "creating SerachBookResultActivity");
         super.onCreate(savedInstanceState);
-
-        //이전 액티비티에서 넘어온 데이터를 받음
-        Intent intentData = getIntent();
-        String data = null;
-
-        //데이터 저장
-        if(intentData.getExtras() != null) {
-            data = intentData.getExtras().getString("resultObject");    /// JSONArrary(String 형) 값 content에 저장     여기서부터
-        }
-        Log.d("progressTag","intent data: " + data);
-
         FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_search_book_result);
 
+        jsonData = null;
+        pageNum = 1;
+        searchStr = null;
+
+        //이전 액티비티에서 넘어온 데이터를 받음
+        Intent intentData = getIntent();
+
+        //데이터 저장
+        if(intentData.getExtras() != null) {
+            jsonData = intentData.getExtras().getString("resultObject");    // JSONArrary(String 형) 값 content에 저장
+            pageNum = intentData.getExtras().getInt("pageNum");             // 전 액티비티에서 검색했을 때 사용한 page 값
+            searchStr = intentData.getExtras().getString("searchStr");      // 전 액티비티에서 검색한 책의 제목
+        }
+        Log.d("progressTag","intent data: " + jsonData);
+
+        //setting button, edit text, listview
         bookSearchBtn = findViewById(R.id.book_search_btn);
         bookSearchBar = findViewById(R.id.book_search_bar);
         resultListView = findViewById(R.id.result_list_view);
@@ -75,9 +84,9 @@ public class SearchBookResultActivity extends AppCompatActivity {
         resultList = new ArrayList<String>();
 
         //검색에 사용할 데이터를 미리 저장
-        if(data != null){
+        if(jsonData != null){
             try {
-                JSONObject obj = new JSONObject(data);
+                JSONObject obj = new JSONObject(jsonData);
                 Log.d("progressTag", "before settinfList: " + obj.getJSONArray("documents").toString());
                 //검색 결과 리스트 나열
                 settingList(obj);
@@ -95,8 +104,36 @@ public class SearchBookResultActivity extends AppCompatActivity {
         //리스트뷰에 어댑터를 연결
         resultListView.setAdapter(adapter);
 
-        //사용자가 검색할 책 제목
-        String text = bookSearchBar.getText().toString();
+        resultListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE && lastitemVisibleFlag) {
+                    // 데이터 로드
+                    String text = searchStr;
+                    //url parameter 인코딩(utf-8)
+                    try {
+                        text = URLEncoder.encode(text, "utf-8");
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                    //URL 설정(제목으로 검색)
+                    pageNum++;
+                    REQUEST_URL = "https://dapi.kakao.com/v2/search/book?target=title&size=20&page=" + pageNum + "&query=" + text;
+
+                    //Log.d("progressTag", "string of REQUEST_URL: " + REQUEST_URL);
+
+                    SearchBookByWord searchBookByWord = new SearchBookByWord(REQUEST_URL,"Authorization", "KakaoAK " + getResources().getString(R.string.kakao_app_rest_key),null);
+                    searchBookByWord.execute();
+
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                lastitemVisibleFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
+            }
+        });
+
 
     }
 
@@ -108,11 +145,11 @@ public class SearchBookResultActivity extends AppCompatActivity {
         text = URLEncoder.encode(text, "utf-8");
 
         //URL 설정(제목으로 검색)
-        REQUEST_URL = "https://dapi.kakao.com/v2/search/book?target=title&query="+text;
-        Log.d("progressTag", "string of REQUEST_URL: " + REQUEST_URL);
+        REQUEST_URL = "https://dapi.kakao.com/v2/search/book?target=title&size=20&query=" + text;
+        pageNum = 1;
+        //Log.d("progressTag", "string of REQUEST_URL: " + REQUEST_URL);
 
         SearchBookByWord searchBookByWord = new SearchBookByWord(REQUEST_URL,"Authorization", "KakaoAK " + getResources().getString(R.string.kakao_app_rest_key),null);
-        //Log.d("progressTag", getResources().getString(R.string.kakao_app_rest_key));
         searchBookByWord.execute();
     }
 
@@ -138,6 +175,8 @@ public class SearchBookResultActivity extends AppCompatActivity {
             result = getHttpURLConnection.request(url,header_key, header_value,values);
             //Log.d("result",result);
             try{
+                Log.d("progressTag", "in doInBackground putting resultString to json object");
+
                 jsonObject = new JSONObject(result);
             }catch(JSONException e){
                 e.printStackTrace();
@@ -152,10 +191,41 @@ public class SearchBookResultActivity extends AppCompatActivity {
 
             //doInBackground로부터 리턴된 값이 onPostExecute의 매개변수
             //json에서 getString, getInt 등으로 필요한 정보 빼낸다.
-
-            Log.d("progressTag", j.toString());
+            JSONObject tmpJson;
+            String sendData ="";
+            if(jsonData != null){
+                try {
+                    tmpJson = new JSONObject(jsonData);
+                    Log.d("progressTag", "result JSON Object: "+j.toString());
+                    Log.d("progressTag", "result JSON Object length: " + j.length());
+                    for(int i=0; i<j.getJSONArray("documents").length();i++){
+                        try {
+                            tmpJson.getJSONArray("documents").put(j.getJSONArray("documents").getJSONObject(i));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    sendData = tmpJson.toString();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                sendData = j.toString();
+            }
             Intent intent = new Intent(SearchBookResultActivity.this, SearchBookResultActivity.class);
-            intent.putExtra("resultObject", j.toString());
+
+            intent.putExtra("resultObject", sendData);
+            intent.putExtra("pageNum", pageNum);
+            if(searchStr != null){
+                intent.putExtra("searchStr", searchStr);
+            } else {
+                intent.putExtra("searchStr", bookSearchBar.getText().toString());
+            }
+
+            Log.d("progressTag", "***in Post Execute: resultObj = " + sendData);
+            Log.d("progressTag", "***in Post Execute: pageNum = " + pageNum);
+            Log.d("progressTag", "***in Post Execute: searchStr = " + searchStr);
+
             startActivity(intent);
             finish();
 
@@ -181,13 +251,13 @@ public class SearchBookResultActivity extends AppCompatActivity {
         }
     }
 
-
-
-
-
-
-
-
+    /*
+    private Runnable updateUI = new Runnable() {
+        public void run() {
+            SearchBookResultActivity.this.adapter.notifyDataSetChanged();
+        }
+    };
+    */
 
 
 
