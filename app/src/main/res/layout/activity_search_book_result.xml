@@ -1,45 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/book_search_layer"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:paddingHorizontal="10dp"
-    android:paddingVertical="4dp">
+    android:paddingVertical="4dp"
+    >
 
-    <android.support.percent.PercentFrameLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/book_search"
-        android:layout_width="match_parent"
+    <EditText
+        android:id="@+id/book_search_bar"
+        android:layout_width="280dp"
         android:layout_height="wrap_content"
-
-        >
-        <EditText
-            android:id="@+id/book_search_bar"
-            app:layout_widthPercent="70%"
-            android:layout_height="wrap_content"
-            android:hint="검색할 책의 제목을 입력하세요."/>
-        <Button
-            android:id="@+id/book_search_btn"
-            android:layout_gravity="right"
-            app:layout_widthPercent="30%"
-            android:layout_height="wrap_content"
-            android:text="검색"
-            android:onClick="clickSearchBookByWord"
-            />
-    </android.support.percent.PercentFrameLayout>
+        android:hint="검색할 책의 제목을 입력하세요."/>
+    <Button
+        android:id="@+id/book_search_btn"
+        android:layout_toRightOf="@id/book_search_bar"
+        android:layout_width="90dp"
+        android:layout_height="wrap_content"
+        android:text="검색"
+        android:onClick="clickSearchBookByWord"
+        />
 
 
     <ListView
         android:id="@+id/result_list_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/book_search"
+        android:layout_below="@id/book_search_bar"
         android:divider="#999999"
         android:dividerHeight="1dp"
         >
-
     </ListView>
 
 </RelativeLayout>

@@ -1,6 +1,7 @@
 package doseo.dodam.com.dodam.Activity;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -9,10 +10,13 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 
 import com.facebook.FacebookSdk;
 
@@ -41,12 +45,14 @@ public class SearchBookResultActivity extends AppCompatActivity {
     private int pageNum;
     private String searchStr;
 
+    private RelativeLayout rl;
     private Button bookSearchBtn;
     private List<String> resultList;
     private ListView resultListView;
     private EditText bookSearchBar;
     private ArrayList<String> arrayList;
     private SearchBookResultAdapter adapter;
+    private InputMethodManager imm;
 
     //요청 url 변수
     private String REQUEST_URL;
@@ -65,10 +71,24 @@ public class SearchBookResultActivity extends AppCompatActivity {
         pageNum = 1;
         searchStr = null;
 
-        //setting button, edit text, listview
+        //relative layer, setting button, edit text, listview
+        rl = findViewById(R.id.book_search_layer);
+        imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+
         bookSearchBtn = findViewById(R.id.book_search_btn);
-        bookSearchBar = findViewById(R.id.book_search_bar);
+        bookSearchBar = (EditText) findViewById(R.id.book_search_bar);
         resultListView = findViewById(R.id.result_list_view);
+
+
+        rl.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                Log.d("progressTag", "in onClick" + bookSearchBar.getWindowToken());
+                imm.hideSoftInputFromWindow(bookSearchBar.getWindowToken(), 0);
+            }
+        });
+
 
         //리스트 생성
         resultList = new ArrayList<String>();
@@ -117,6 +137,14 @@ public class SearchBookResultActivity extends AppCompatActivity {
 
 
     }
+
+    /*
+    public void layerOnClick(View v){
+        Log.d("progressTag", "asjhglerlgjl");
+        Log.d("progressTag", "keyboard function: "+ bookSearchBar.getWindowToken());
+        imm.hideSoftInputFromWindow(bookSearchBar.getWindowToken(), 0);
+    }
+    */
 
     public void clickSearchBookByWord(View view) throws UnsupportedEncodingException {
         String text = bookSearchBar.getText().toString();
