@@ -2,6 +2,7 @@ package doseo.dodam.com.dodam.Activity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -22,10 +23,12 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import doseo.dodam.com.dodam.Object.User;
@@ -34,10 +37,10 @@ import doseo.dodam.com.dodam.R;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String tmp_isbn;
+    //private String tmp_isbn;
     private ImageView imgView;
     private String SEARCH_URL = "http://13.125.145.191:8000/test";
-    private String REQUEST_URL = SEARCH_URL;
+    //private String REQUEST_URL = SEARCH_URL;
     private Bitmap bitmap;
     final static User currentUser = new User();
     private Button logoutBtn;
@@ -53,6 +56,37 @@ public class MainActivity extends AppCompatActivity {
         imgView = (ImageView) findViewById(R.id.user_profile_pic);
 
         checkLogin();
+
+        //프로필 이미지
+        Thread mThread = new Thread(){
+            @Override
+            public void run(){
+                try{
+                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId()+ "/picture?type=large");
+
+                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                    conn.setDoInput(true);
+                    conn.connect();
+
+                    InputStream is = conn.getInputStream();
+                    bitmap = BitmapFactory.decodeStream(is);
+
+                }catch(MalformedURLException e){
+                    e.printStackTrace();
+                }catch(IOException e){
+                    e.printStackTrace();;
+                }
+            }
+        };
+        mThread.start();
+
+        try{
+            mThread.join();
+
+            imgView.setImageBitmap(bitmap);
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }
     }
 
     //로그인 체크 함수
@@ -62,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("TAG", "checkLogin() start");
         if (AccessToken.getCurrentAccessToken() != null) {
             //로그인 되어있는 상태
+            //userId와 userName을 서버로부터 받아와야함.
             Log.d("TAG", "로그인 되어있음");
             logoutBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -84,32 +119,6 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 }
-
-    //프로필 사진
-        /*Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setDoInput(true);
-                    conn.connect();
-
-                    InputStream is =conn.getInputStream();
-                    bitmap = BitmapFactory.decodeStream(is);
-
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
-        try{
-            thread.join();
-            imgView.setImageBitmap(bitmap);
-        }catch(Exception e){
-            e.printStackTrace();
-        }*/
 
          /*//서버 연결시 필요한 핸들러 선언
     private final MyHandler mHandler = new MyHandler(this);
