@@ -45,7 +45,6 @@ public class SearchBookResultActivity extends AppCompatActivity {
     private int pageNum;
     private String searchStr;
 
-    private RelativeLayout rl;
     private Button bookSearchBtn;
     private List<String> resultList;
     private ListView resultListView;
@@ -72,22 +71,14 @@ public class SearchBookResultActivity extends AppCompatActivity {
         searchStr = null;
 
         //relative layer, setting button, edit text, listview
-        rl = findViewById(R.id.book_search_layer);
         imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 
         bookSearchBtn = findViewById(R.id.book_search_btn);
-        bookSearchBar = (EditText) findViewById(R.id.book_search_bar);
+        bookSearchBar = findViewById(R.id.book_search_bar);
         resultListView = findViewById(R.id.result_list_view);
 
 
-        rl.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                Log.d("progressTag", "in onClick" + bookSearchBar.getWindowToken());
-                imm.hideSoftInputFromWindow(bookSearchBar.getWindowToken(), 0);
-            }
-        });
+
 
 
         //리스트 생성
@@ -147,6 +138,7 @@ public class SearchBookResultActivity extends AppCompatActivity {
     */
 
     public void clickSearchBookByWord(View view) throws UnsupportedEncodingException {
+        imm.hideSoftInputFromWindow(bookSearchBar.getWindowToken(), 0);
         String text = bookSearchBar.getText().toString();
         Log.d("progressTag", "string from EditBox: " + text);
 
