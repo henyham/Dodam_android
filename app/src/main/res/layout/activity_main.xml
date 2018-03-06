@@ -19,11 +19,15 @@
             android:text="검색하기"
             android:onClick="searchBook"/>
 
-        <TextView
+        <!--<TextView
             android:layout_height="wrap_content"
             android:layout_width="20dp"
             android:singleLine = "true"
-            android:text="helloooooooo"/>
+            android:text="helloooooooo"/>-->
+        <TextView
+            android:id="@+id/user_name_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
 
         <ImageView
             android:layout_height="100dp"

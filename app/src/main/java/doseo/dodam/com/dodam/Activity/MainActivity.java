@@ -1,46 +1,45 @@
 package doseo.dodam.com.dodam.Activity;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.text.method.ScrollingMovementMethod;
 
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 
-import java.io.BufferedReader;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
+import doseo.dodam.com.dodam.Connection.GetHttpURLConnection;
 import doseo.dodam.com.dodam.Object.User;
 import doseo.dodam.com.dodam.R;
 
 
 public class MainActivity extends AppCompatActivity {
 
-    private String tmp_isbn;
     private ImageView imgView;
-    private String SEARCH_URL = "http://13.125.145.191:8000/test";
-    private String REQUEST_URL = SEARCH_URL;
+    private Button logoutBtn;
+    private TextView userNameTv;
+    private String REQUEST_URL;
     private Bitmap bitmap;
     final static User currentUser = new User();
-    private Button logoutBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +48,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         //위젯 참조
-        logoutBtn = (Button) findViewById(R.id.logout_btn);
-        imgView = (ImageView) findViewById(R.id.user_profile_pic);
+        logoutBtn = findViewById(R.id.logout_btn);
+        imgView = findViewById(R.id.user_profile_pic);
+        userNameTv = findViewById(R.id.user_name_tv);
 
         checkLogin();
+
     }
 
     //로그인 체크 함수
@@ -62,7 +63,15 @@ public class MainActivity extends AppCompatActivity {
         Log.d("TAG", "checkLogin() start");
         if (AccessToken.getCurrentAccessToken() != null) {
             //로그인 되어있는 상태
+            //userId와 userName을 서버로부터 받아와야함.
+
+            //URL 설정
+            REQUEST_URL = "http://13.125.145.191:8000/users/login?userId=" + AccessToken.getCurrentAccessToken().getUserId();
+
+            GetUserInfo getUserInfo = new GetUserInfo(REQUEST_URL,null,null,null);
+            getUserInfo.execute();
             Log.d("TAG", "로그인 되어있음");
+
             logoutBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -83,33 +92,88 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, SearchBookActivity.class);
         startActivity(intent);
     }
-}
 
-    //프로필 사진
-        /*Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    URL url = new URL("https://graph.facebook.com/" + AccessToken.getCurrentAccessToken().getUserId() + "/picture?type=large");
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-                    conn.setDoInput(true);
-                    conn.connect();
+    public class GetUserInfo extends AsyncTask<Void, Void, JSONObject> {
+        private String url;
+        private ContentValues values;
+        private String header_key;
+        private String header_value;
 
-                    InputStream is =conn.getInputStream();
-                    bitmap = BitmapFactory.decodeStream(is);
+        public GetUserInfo(String url, String header_key, String header_value, ContentValues values){
+            this.url = url;
+            this.header_key = header_key;
+            this.header_value = header_value;
+            this.values = values;
+        }
 
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
+        @Override
+        protected JSONObject doInBackground(Void ... params){
+            JSONObject jsonObject = null;   //요청 결과를 json 객체로 저장할 변수
+            String result = "DEFAULT";  //요청 결과를 string 형태로 저장할 변수
+
+            GetHttpURLConnection getHttpURLConnection = new GetHttpURLConnection();
+            result = getHttpURLConnection.request(url,header_key, header_value,values);
+            Log.d("request result : ", result);
+            try{
+                jsonObject = new JSONObject(result);
+            }catch(JSONException e){
+                e.printStackTrace();
             }
-        });
-        thread.start();
-        try{
-            thread.join();
-            imgView.setImageBitmap(bitmap);
-        }catch(Exception e){
-            e.printStackTrace();
-        }*/
+
+            return jsonObject;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject j){
+            super.onPostExecute(j);
+
+            //doInBackground로부터 리턴된 값이 onPostExecute의 매개변수
+            try{
+                if(j.getString("userName") == ""){
+                    Log.d("ERR","can't get userName from Server");
+                }else{
+                 currentUser.setUserId(AccessToken.getCurrentAccessToken().getUserId());
+                 currentUser.setUserName(j.getString("userName"));
+                 currentUser.setUserProfile("https://graph.facebook.com/" + currentUser.getUserId()+ "/picture?type=large");
+
+                 //textView와 imageView를 채워 넣는다.
+                 userNameTv.setText(currentUser.getUserName());
+
+                    Thread mThread = new Thread(){
+                        @Override
+                        public void run(){
+                            try{
+                                Log.d("profile url1: ", currentUser.getUserProfile());
+                                URL url = new URL(currentUser.getUserProfile());
+
+                                HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+                                conn.setDoInput(true);
+                                conn.connect();
+                                InputStream is = conn.getInputStream();
+                                bitmap = BitmapFactory.decodeStream(is);
+                            }catch(MalformedURLException e){
+                                e.printStackTrace();
+                            }catch(IOException e){
+                                e.printStackTrace();
+                            }
+                        }
+                    };
+                    mThread.start();
+
+                    try{
+                        mThread.join();
+                        Log.d("profile url6: ", currentUser.getUserProfile());
+                        imgView.setImageBitmap(bitmap);
+                    }catch(InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
+    }
+}
 
          /*//서버 연결시 필요한 핸들러 선언
     private final MyHandler mHandler = new MyHandler(this);
