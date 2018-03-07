@@ -25,7 +25,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,10 +45,10 @@ public class SearchBookResultActivity extends AppCompatActivity {
     private String searchStr;
 
     private Button bookSearchBtn;
-    private List<String> resultList;
+    private List<JSONObject> resultList;
     private ListView resultListView;
     private EditText bookSearchBar;
-    private ArrayList<String> arrayList;
+    private ArrayList<JSONObject> arrayList;
     private SearchBookResultAdapter adapter;
     private InputMethodManager imm;
 
@@ -82,10 +81,10 @@ public class SearchBookResultActivity extends AppCompatActivity {
 
 
         //리스트 생성
-        resultList = new ArrayList<String>();
+        resultList = new ArrayList<JSONObject>();
 
         //리스트의 모든 데이터를 arraylist에 복사(result list의 복사본 생성)
-        arrayList = new ArrayList<String>();
+        arrayList = new ArrayList<JSONObject>();
         arrayList.addAll(resultList);
 
         //리스트뷰에 연동될 어댑터 생성
@@ -129,13 +128,6 @@ public class SearchBookResultActivity extends AppCompatActivity {
 
     }
 
-    /*
-    public void layerOnClick(View v){
-        Log.d("progressTag", "asjhglerlgjl");
-        Log.d("progressTag", "keyboard function: "+ bookSearchBar.getWindowToken());
-        imm.hideSoftInputFromWindow(bookSearchBar.getWindowToken(), 0);
-    }
-    */
 
     public void clickSearchBookByWord(View view) throws UnsupportedEncodingException {
         imm.hideSoftInputFromWindow(bookSearchBar.getWindowToken(), 0);
@@ -239,7 +231,12 @@ public class SearchBookResultActivity extends AppCompatActivity {
         JSONArray returnResult = jsonObject.getJSONArray("documents");
 
             for(int i=0;i<returnResult.length();i++){
-                resultList.add(returnResult.getJSONObject(i).getString("title").toString());
+                JSONObject tmpObj = new JSONObject();
+                tmpObj.accumulate("bookCover", returnResult.getJSONObject(i).getString("thumbnail").toString());
+                tmpObj.accumulate("title", returnResult.getJSONObject(i).getString("title").toString());
+                tmpObj.accumulate("author", returnResult.getJSONObject(i).getJSONArray("authors").get(0).toString());
+
+                resultList.add(tmpObj);
         }
 
         // 리스트 데이터가 변경되었으므로 아답터를 갱신하여 검색된 데이터를 화면에 보여준다.
