@@ -8,9 +8,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.haha.perflib.Main;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,6 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import doseo.dodam.com.dodam.Connection.GetHttpURLConnection;
+import doseo.dodam.com.dodam.Connection.PostHttpURLConnection;
 import doseo.dodam.com.dodam.Object.Book;
 import doseo.dodam.com.dodam.R;
 
@@ -107,6 +111,11 @@ public class BarcodeResultActivity extends AppCompatActivity {
         }catch(InterruptedException e){
             e.printStackTrace();
         }
+
+
+        REQUEST_URL = "http://13.125.145.191:8000/books/state?userId=" + MainActivity.currentUser.getUserId() + "&isbn=" + isbn_str;
+        SearchBookState searchBookState = new SearchBookState(REQUEST_URL, null, null, null);
+        searchBookState.execute();
     }
 
     public class SearchBook extends AsyncTask<Void, Void, JSONObject> {
@@ -200,5 +209,213 @@ public class BarcodeResultActivity extends AppCompatActivity {
             }
         }
     }
+
+    public class SearchBookState extends AsyncTask<Void, Void, JSONObject> {
+        private String url;
+        private ContentValues values;
+        private String header_key;
+        private String header_value;
+
+        public SearchBookState(String url, String header_key, String header_value, ContentValues values){
+            this.url = url;
+            this.values = values;
+            this.header_key = header_key;
+            this.header_value = header_value;
+        }
+
+        @Override
+        protected JSONObject doInBackground(Void ... params){
+            JSONObject jsonObject = null;   //요청 결과를 json 객체로 저장할 변수
+            String result;  //요청 결과를 string 형태로 저장할 변수
+
+            GetHttpURLConnection getHttpURLConnection = new GetHttpURLConnection();
+            result = getHttpURLConnection.request(url,header_key, header_value,values);
+            Log.d("result",result);
+            try{
+                jsonObject = new JSONObject(result);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+
+            return jsonObject;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject j) {
+            super.onPostExecute(j);
+
+            //doInBackground로부터 리턴된 값이 onPostExecute의 매개변수
+            //json에서 getString, getInt 등으로 필요한 정보 빼낸다.
+
+            try {
+                String stateStr = j.getString("bookState");
+                Log.d("progressTag", stateStr);
+                if(stateStr.equals("registeredBook")){
+                    Log.d("progressTag", "I'm in registered book~");
+                    addBookBtn.setText("읽기 시작하기");
+                    addBookBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.d("progressTag", "읽기 시작하기 누름");
+                            
+
+                        }
+                    });
+                }
+                else {
+                    Log.d("progressTag", "I'm in new book~");
+                    addBookBtn.setText("책 담기");
+                    addBookBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.d("progressTag", "책 담기 누름");
+
+                            //책이 book 테이블에 들어있는지 확인 -> 함수로 따로 빼놓을 것
+                            REQUEST_URL = "http://13.125.145.191:8000/books/exist?isbn=" + isbn_str + "&userId="+MainActivity.currentUser.getUserId();
+                            SearchBookExistence searchBookExistence = new SearchBookExistence(REQUEST_URL, null, null, null);
+                            searchBookExistence.execute();
+
+                        }
+                    });
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
+
+
+
+    public class SearchBookExistence extends AsyncTask<Void, Void, JSONObject> {
+        private String url;
+        private ContentValues values;
+        private String header_key;
+        private String header_value;
+
+        public SearchBookExistence(String url, String header_key, String header_value, ContentValues values){
+            this.url = url;
+            this.values = values;
+            this.header_key = header_key;
+            this.header_value = header_value;
+        }
+
+        @Override
+        protected JSONObject doInBackground(Void ... params){
+            JSONObject jsonObject = null;   //요청 결과를 json 객체로 저장할 변수
+            String result;  //요청 결과를 string 형태로 저장할 변수
+
+            GetHttpURLConnection getHttpURLConnection = new GetHttpURLConnection();
+            result = getHttpURLConnection.request(url,header_key, header_value,values);
+            Log.d("result",result);
+            try{
+                jsonObject = new JSONObject(result);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+
+            return jsonObject;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject j) {
+            super.onPostExecute(j);
+
+            //doInBackground로부터 리턴된 값이 onPostExecute의 매개변수
+            //json에서 getString, getInt 등으로 필요한 정보 빼낸다.
+            try {
+                String stateStr = j.getString("bookState");
+                Log.d("progressTag", "stateStr: " + stateStr);
+
+                if(stateStr.equals("SUCCESS")){
+                    Log.d("progressTag", "이미 북테이블에 있던 책");
+                } else {
+                    Log.d("progressTag", "북테이블에 없던 새로운 책");
+                    REQUEST_URL = "http://13.125.145.191:8000/books/register";
+
+                    ContentValues obj = new ContentValues();
+                    obj.put("userId", MainActivity.currentUser.getUserId());
+                    obj.put("isbn", isbn_str);
+                    obj.put("cover", resultBook.getBook_cover());
+                    obj.put("title", resultBook.getTitle());
+                    obj.put("category", resultBook.getCategory_name());
+
+                    int idx = 0;
+                    String authors = "";
+
+                    while(resultBook.getBook_authors().size()>idx){
+                        authors += resultBook.getBook_authors().get(idx);
+                        if(idx != resultBook.getBook_authors().size()-1)
+                            authors += ", ";
+                        idx++;
+                    }
+                    obj.put("author", authors);
+
+                    obj.put("publisher", resultBook.getPublisher());
+                    obj.put("pubdate", resultBook.getPub_date());
+                    obj.put("fixed_price", resultBook.getFixed_price());
+
+                    RegisterNewBook registerNewBook = new RegisterNewBook(REQUEST_URL, obj);
+                    registerNewBook.execute();
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public class RegisterNewBook extends AsyncTask<Void, Void, JSONObject> {
+        private String url;
+        private ContentValues values;
+
+        public RegisterNewBook(String url, ContentValues values){
+            this.url = url;
+            this.values = values;
+        }
+
+        @Override
+        protected JSONObject doInBackground(Void ... params){
+            JSONObject jsonObject = null;   //요청 결과를 json 객체로 저장할 변수
+            String result;  //요청 결과를 string 형태로 저장할 변수
+
+            PostHttpURLConnection postHttpURLConnection = new PostHttpURLConnection();
+            result = postHttpURLConnection.request(url, values);
+            Log.d("result",result);
+            try{
+                jsonObject = new JSONObject(result);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+
+            return jsonObject;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject j) {
+            super.onPostExecute(j);
+
+            //doInBackground로부터 리턴된 값이 onPostExecute의 매개변수
+            //json에서 getString, getInt 등으로 필요한 정보 빼낸다.
+
+            Log.d("progressTag", "책 등록 완료");
+            finish();
+            startActivity(getIntent());
+        }
+
+    }
+
+
+
+
+
+
+
+
+
 
 }
